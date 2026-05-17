@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏛️ Gaudí Walking App - Pour Stéphanie & Louann 👯</title>
+    
+    <!-- Leaflet CSS pour la carte -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Titre personnalisé */
+        .personal-title {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-bottom: 3px solid #92400e;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .personal-title .names {
+            font-size: 1.25rem;
+            margin-top: 0.5rem;
+            opacity: 0.95;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #daa520;
+            padding: 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 1.875rem;
+            font-weight: 900;
+            color: #92400e;
+            margin: 0;
+        }
+
+        .header-left p {
+            font-size: 0.875rem;
+            color: #b45309;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 0.875rem;
+            color: #b45309;
+        }
+
+        .header-right p {
+            margin: 0.25rem 0;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid #fed7aa;
+            padding: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        nav button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            background: rgba(217, 119, 6, 0.1);
+            color: #92400e;
+            border: 1px solid transparent;
+        }
+
+        nav button:hover {
+            background: rgba(217, 119, 6, 0.2);
+        }
+
+        nav button.active {
+            background: #d97706;
+            color: white;
+            border: 1px solid #d97706;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1280px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .buildings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .building-card {
+            background: white;
+            border-radius: 0.75rem;
+            border: 2px solid #fed7aa;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .building-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-color: #fb923c;
+        }
+
+        .building-emoji {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+        }
+
+        .building-info {
+            padding: 1rem;
+        }
+
+        .building-name {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: #92400e;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .building-architect {
+            font-size: 0.75rem;
+            color: #b45309;
+            margin: 0;
+        }
+
+        .building-details {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #92400e;
+        }
+
+        .building-description {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: #b45309;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @media (min-width: 640px) {
+            .modal {
+                align-items: center;
+            }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 42rem;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            border-bottom: 2px solid #fed7aa;
+            position: relative;
+        }
+
+        .modal-emoji {
+            font-size: 2.5rem;
+        }
+
+        .modal-title h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #92400e;
+            margin: 0;
+        }
+
+        .modal-title p {
+            font-size: 0.875rem;
+            color: #b45309;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #92400e;
+        }
+
+        .modal-close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-box {
+            background: #fef3c7;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 3px solid #d97706;
+        }
+
+        .modal-box-label {
+            font-size: 0.75rem;
+            color: #b45309;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .modal-box-value {
+            font-weight: bold;
+            color: #92400e;
+            margin: 0;
+        }
+
+        .modal-description {
+            font-size: 0.95rem;
+            color: #5b4d3a;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #fed7aa;
+        }
+
+        .highlights {
+            margin-bottom: 1.5rem;
+        }
+
+        .highlights h3 {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #92400e;
+            margin: 0 0 0.75rem 0;
+        }
+
+        .highlights-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .highlight-tag {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid #fed7aa;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b45309;
+        }
+
+        .btn-secondary {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fed7aa;
+        }
+
+        .btn-secondary:hover {
+            background: #fed7aa;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid #fed7aa;
+            margin-top: 3rem;
+            padding: 2rem;
+            text-align: center;
+            color: #b45309;
+            font-size: 0.875rem;
+        }
+
+        .heart {
+            color: #dc2626;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: left;
+            }
+
+            .header-right {
+                text-align: left;
+            }
+
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .buildings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #b45309;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+        }
+
+        /* Carte Interactive */
+        .map-container {
+            width: 100%;
+            height: 600px;
+            border-radius: 0.75rem;
+            border: 2px solid #fed7aa;
+            overflow: hidden;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .leaflet-popup-content {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .map-legend {
+            background: white;
+            border: 2px solid #fed7aa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .map-legend h3 {
+            color: #92400e;
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+        }
+
+        .map-legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #92400e;
+        }
+
+        .legend-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #d97706;
+        }
+
+        .legend-item.circuit1 .legend-dot {
+            background: #ef4444;
+        }
+
+        .legend-item.circuit2 .legend-dot {
+            background: #3b82f6;
+        }
+
+        .legend-item.circuit3 .legend-dot {
+            background: #8b5cf6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Titre Personnalisé -->
+    <div class="personal-title">
+        <div>🏛️ Gaudí à Pied - Barcelona Walking Guide</div>
+        <div class="names">Pour Stéphanie & Louann 👯</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="header-left">
+                <h1>🏛️ Gaudí à Pied</h1>
+                <p>Découvrir l'architecture moderniste à Barcelone</p>
+            </div>
+            <div class="header-right">
+                <p id="building-count">📍 11 bâtiments</p>
+                <p>⏱️ ~10 km</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav id="navigation">
+        <button class="nav-btn active" data-circuit="all">🌍 Tous</button>
+        <button class="nav-btn" data-circuit="1">1️⃣ Eixample</button>
+        <button class="nav-btn" data-circuit="2">2️⃣ Gràcia</button>
+        <button class="nav-btn" data-circuit="3">3️⃣ Bonus</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Carte Interactive -->
+        <div style="max-width: 1280px; margin: 0 auto; padding: 0 1rem;">
+            <h2 style="text-align: center; color: #92400e; margin: 2rem 0 1rem 0; font-size: 1.5rem;">🗺️ Carte Interactive</h2>
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+            
+            <div class="map-legend">
+                <h3>Légende des Circuits</h3>
+                <div class="map-legend-items">
+                    <div class="legend-item circuit1">
+                        <div class="legend-dot"></div>
+                        <span>Circuit 1 - Eixample</span>
+                    </div>
+                    <div class="legend-item circuit2">
+                        <div class="legend-dot"></div>
+                        <span>Circuit 2 - Gràcia</span>
+                    </div>
+                    <div class="legend-item circuit3">
+                        <div class="legend-dot"></div>
+                        <span>Circuit 3 - Bonus</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="buildings-grid" id="buildingsGrid">
+            <!-- Remplissage dynamique en JS -->
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-emoji" id="modalEmoji">🏛️</span>
+                <div class="modal-title">
+                    <h2 id="modalName">Casa Batlló</h2>
+                    <p id="modalYear">1904-1906</p>
+                </div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <div class="modal-box">
+                        <p class="modal-box-label">ARCHITECTE</p>
+                        <p class="modal-box-value" id="modalArchitect">Antoni Gaudí</p>
+                    </div>
+                    <div class="modal-box">
+                        <p class="modal-box-label">STYLE</p>
+                        <p class="modal-box-value" id="modalStyle">Modernisme</p>
+                    </div>
+                    <div class="modal-box">
+                        <p class="modal-box-label">⏱️ DURÉE</p>
+                        <p class="modal-box-value" id="modalTime">90 min</p>
+                    </div>
+                    <div class="modal-box">
+                        <p class="modal-box-label">💰 COÛT</p>
+                        <p class="modal-box-value" id="modalCost">25€</p>
+                    </div>
+                </div>
+
+                <div class="modal-description" id="modalDescription">
+                    Description...
+                </div>
+
+                <div class="highlights">
+                    <h3>✨ Points clés</h3>
+                    <div class="highlights-list" id="modalHighlights">
+                        <!-- Dynamique -->
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" onclick="toggleFavorite(currentBuilding.id)">
+                        <span id="favoriteBtn">❤️ Ajouter aux favoris</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="copyToClipboard()">
+                        📋 Copier
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>❤️ Créé pour découvrir Gaudí et ses disciples à pied à Barcelone</p>
+        <p style="margin-top: 0.5rem; font-size: 0.75rem;">💡 Version de test - Prête pour déployer sur Vercel</p>
+    </footer>
+
+    <script>
+        const buildings = [
+            {
+                id: 1,
+                name: 'Casa Calvet',
+                circuit: '1',
+                address: 'Carrer de Casp, 48',
+                architect: 'Antoni Gaudí',
+                year: '1898-1900',
+                style: 'Baroque catalan sobre',
+                time: '15-20 min',
+                cost: 'Gratuit',
+                coords: { lat: 41.3909, lng: 2.1730 },
+                description: 'Une des créations les plus sobres de Gaudí. Immeuble avec balcons ondulés. Prix du plus bel édifice en 1900.',
+                highlights: ['Façade baroque', 'Balcons ondulés', 'Restaurant au RDC'],
+                image: '🏢'
+            },
+            {
+                id: 2,
+                name: 'Casa Lléo Morera',
+                circuit: '1',
+                address: 'Passeig de Gràcia, 35',
+                architect: 'Lluís Domènech i Montaner',
+                year: '1902-1906',
+                style: 'Modernisme fleuri',
+                time: '10 min',
+                cost: 'Gratuit',
+                coords: { lat: 41.3911, lng: 2.1654 },
+                description: 'Magnifique façade avec motifs floraux. Block of Discord. Sculptures et vitraux colorés.',
+                highlights: ['Motifs floraux', 'Sculptures', 'Vitraux'],
+                image: '🌸'
+            },
+            {
+                id: 3,
+                name: 'Casa Amatller',
+                circuit: '1',
+                address: 'Passeig de Gràcia, 41',
+                architect: 'Josep Puig i Cadafalch',
+                year: '1898-1900',
+                style: 'Néo-gothique meublée',
+                time: '60 min',
+                cost: '20-25€',
+                coords: { lat: 41.3916, lng: 2.1651 },
+                description: 'Maison chocolatier entièrement meublée. Moins touristique que Casa Batlló. Vitraux magnifiques.',
+                highlights: ['Intérieur meublé', 'Vitraux', 'Moins touristique'],
+                image: '🏛️'
+            },
+            {
+                id: 4,
+                name: 'Casa Batlló',
+                circuit: '1',
+                address: 'Passeig de Gràcia, 43',
+                architect: 'Antoni Gaudí',
+                year: '1904-1906',
+                style: 'Modernisme organique',
+                time: '90-120 min',
+                cost: '25-30€',
+                coords: { lat: 41.3917, lng: 2.1649 },
+                description: 'Chef-d\'œuvre gaudien ! Toit en écailles de dragon, balcons en masques. UNESCO.',
+                highlights: ['Toit spectaculaire', 'Balcons masques', 'Intérieur ondulant'],
+                image: '🐉'
+            },
+            {
+                id: 5,
+                name: 'Casa Milà - La Pedrera',
+                circuit: '1',
+                address: 'Passeig de Gràcia, 92',
+                architect: 'Antoni Gaudí',
+                year: '1906-1912',
+                style: 'Modernisme ondulé',
+                time: '90 min',
+                cost: '25-30€',
+                coords: { lat: 41.3940, lng: 2.1627 },
+                description: 'Façade en pierre ondulée massive. Cheminées sculpturales. Dernière résidence de Gaudí.',
+                highlights: ['Façade ondulée', 'Cheminées guerriers', 'Espace Gaudí'],
+                image: '🌊'
+            },
+            {
+                id: 6,
+                name: 'Casa Comalat',
+                circuit: '1',
+                address: 'Av. Diagonal, 442',
+                architect: 'Salvador Valeri i Pupurull',
+                year: '1911',
+                style: 'Deux visages opposés',
+                time: '20 min',
+                cost: 'Gratuit',
+                coords: { lat: 41.3971, lng: 2.1607 },
+                description: 'UNIQUE : Deux façades complètement différentes ! Côté Diagonal classique, côté Corsega courbes gau diennes.',
+                highlights: ['Deux façades', 'Paraboles gau diennes', 'Design unique'],
+                image: '🎭'
+            },
+            {
+                id: 7,
+                name: 'Palau del Baró de Quadras',
+                circuit: '1',
+                address: 'Av. Diagonal, 373',
+                architect: 'Josep Puig i Cadafalch',
+                year: '1904-1906',
+                style: 'Néo-gothique + modernisme',
+                time: '20-30 min',
+                cost: 'Gratuit',
+                coords: { lat: 41.3968, lng: 2.1614 },
+                description: 'Palais aux façades contrastées. Sculptures détaillées. Monument National d\'Intérêt.',
+                highlights: ['Sculptures gothiques', 'Façades contrastées', 'Détails ornementaux'],
+                image: '🏰'
+            },
+            {
+                id: 8,
+                name: 'Casa Vicens',
+                circuit: '2',
+                address: 'Carrer de les Carolines, 20-26',
+                architect: 'Antoni Gaudí',
+                year: '1883-1885',
+                style: 'Néo-mudéjar oriental',
+                time: '75 min',
+                cost: '20€',
+                coords: { lat: 41.4035, lng: 2.1506 },
+                description: 'Première grande œuvre de Gaudí ! Moins touristique. Céramique verte et blanche. Audio-guide à votre rythme.',
+                highlights: ['Première maison Gaudí', 'Céramique', 'Moins touristique'],
+                image: '🕌'
+            },
+            {
+                id: 9,
+                name: 'Palau Güell',
+                circuit: '3',
+                address: 'Carrer Nou de la Rambla, 3-5',
+                architect: 'Antoni Gaudí',
+                year: '1886-1890',
+                style: 'Modernisme élégant',
+                time: '75 min',
+                cost: '20€',
+                coords: { lat: 41.3789, lng: 2.1742 },
+                description: 'Palais du mécène Güell. Intérieur intime et sombre. Rooftop spectaculaire avec cheminées.',
+                highlights: ['Intérieur intime', 'Rooftop spectaculaire', 'Moins connu'],
+                image: '🎨'
+            },
+            {
+                id: 10,
+                name: 'Sant Pau - Hôpital Art Nouveau',
+                circuit: '3',
+                address: 'Carrer de Sant Antoni Maria Claret, 167',
+                architect: 'Lluís Domènech i Montaner',
+                year: '1902-1930',
+                style: 'Art Nouveau UNESCO',
+                time: '90 min',
+                cost: '18€',
+                coords: { lat: 41.4117, lng: 2.1743 },
+                description: 'Plus grand ensemble Art Nouveau du monde ! Mosaïques colorées, pavillons, jardins. Moins touristique.',
+                highlights: ['UNESCO', 'Tunnels souterrains', 'Mosaïques', 'Jardins'],
+                image: '⚕️'
+            },
+            {
+                id: 11,
+                name: 'Park Güell',
+                circuit: '1',
+                address: 'Carrer d\'Olot, 5, 08024 Barcelona',
+                architect: 'Antoni Gaudí',
+                year: '1900-1914',
+                style: 'Modernisme nature',
+                time: '2-3 heures',
+                cost: '12-14€',
+                coords: { lat: 41.4145, lng: 2.1527 },
+                description: 'Chef-d\'œuvre gaudien ! Parc magique avec mosaïques colorées en trencadís, escaliers fantastiques, colonnes inclinées. Terrasse spectaculaire avec banc ondulé. Vue imprenable sur Barcelone. Incontournable !',
+                highlights: ['Mosaïques trencadís', 'Terrasse panoramique', 'Banc ondulé', 'Vue sur ville'],
+                image: '🦎'
+            }
+        ];
+
+        let currentCircuit = 'all';
+        let currentBuilding = null;
+        let favorites = [];
+
+        function renderBuildings() {
+            const grid = document.getElementById('buildingsGrid');
+            const filtered = currentCircuit === 'all' 
+                ? buildings 
+                : buildings.filter(b => b.circuit === currentCircuit);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><p>Aucun bâtiment dans ce circuit</p></div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(building => `
+                <div class="building-card" onclick="openModal(${building.id})">
+                    <div class="building-emoji">${building.image}</div>
+                    <div class="building-info">
+                        <p class="building-name">${building.name}</p>
+                        <p class="building-architect">${building.architect}</p>
+                        <div class="building-details">
+                            <div>⏱️ ${building.time}</div>
+                            <div>💰 ${building.cost}</div>
+                        </div>
+                        <p class="building-description">${building.description}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('building-count').textContent = `📍 ${filtered.length} bâtiments`;
+        }
+
+        function openModal(id) {
+            currentBuilding = buildings.find(b => b.id === id);
+            const modal = document.getElementById('modal');
+            
+            document.getElementById('modalEmoji').textContent = currentBuilding.image;
+            document.getElementById('modalName').textContent = currentBuilding.name;
+            document.getElementById('modalYear').textContent = currentBuilding.year;
+            document.getElementById('modalArchitect').textContent = currentBuilding.architect;
+            document.getElementById('modalStyle').textContent = currentBuilding.style;
+            document.getElementById('modalTime').textContent = currentBuilding.time;
+            document.getElementById('modalCost').textContent = currentBuilding.cost;
+            document.getElementById('modalDescription').textContent = currentBuilding.description;
+            
+            const highlightsHtml = currentBuilding.highlights
+                .map(h => `<span class="highlight-tag">${h}</span>`)
+                .join('');
+            document.getElementById('modalHighlights').innerHTML = highlightsHtml;
+
+            const isFavorite = favorites.includes(id);
+            document.getElementById('favoriteBtn').textContent = isFavorite ? '✅ Dans les favoris' : '❤️ Ajouter aux favoris';
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function toggleFavorite(id) {
+            const index = favorites.indexOf(id);
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(id);
+            }
+            document.getElementById('favoriteBtn').textContent = favorites.includes(id) ? '✅ Dans les favoris' : '❤️ Ajouter aux favoris';
+        }
+
+        function copyToClipboard() {
+            const text = `Découvrez ${currentBuilding.name} sur Gaudí à Pied! ${currentBuilding.description}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Copié !');
+            });
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentCircuit = e.target.dataset.circuit;
+                renderBuildings();
+            });
+        });
+
+        // Fermer le modal en cliquant dehors
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal')) {
+                closeModal();
+            }
+        });
+
+        // Rendu initial
+        renderBuildings();
+
+        // Initialiser la carte
+        const map = L.map('map').setView([41.395, 2.170], 13);
+
+        // Ajouter le tile layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Couleurs par circuit
+        const circuitColors = {
+            '1': '#ef4444',  // Rouge
+            '2': '#3b82f6',  // Bleu
+            '3': '#8b5cf6',  // Violet
+            'bonus': '#8b5cf6'  // Violet
+        };
+
+        // Ajouter les marqueurs
+        buildings.forEach(building => {
+            const color = circuitColors[building.circuit] || '#d97706';
+            
+            // Créer une HTML personnalisée pour le marqueur
+            const markerHTML = `
+                <div style="
+                    background: ${color};
+                    color: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    border: 3px solid white;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    cursor: pointer;
+                ">
+                    ${building.image}
+                </div>
+            `;
+
+            const marker = L.marker([building.coords.lat, building.coords.lng], {
+                icon: L.divIcon({
+                    html: markerHTML,
+                    className: 'custom-marker',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    popupAnchor: [0, -20]
+                })
+            }).addTo(map);
+
+            // Popup au clic
+            marker.bindPopup(`
+                <div style="min-width: 200px;">
+                    <h3 style="margin: 0 0 0.5rem 0; color: #92400e;">${building.name}</h3>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #b45309;">
+                        <strong>Architecte:</strong> ${building.architect}
+                    </p>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #b45309;">
+                        <strong>Année:</strong> ${building.year}
+                    </p>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #b45309;">
+                        <strong>Durée:</strong> ${building.time}
+                    </p>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #b45309;">
+                        <strong>Coût:</strong> ${building.cost}
+                    </p>
+                    <button style="
+                        margin-top: 0.75rem;
+                        padding: 0.5rem 1rem;
+                        background: #d97706;
+                        color: white;
+                        border: none;
+                        border-radius: 0.5rem;
+                        cursor: pointer;
+                        font-weight: bold;
+                    " onclick="openModal(${building.id})">Voir détails</button>
+                </div>
+            `);
+
+            // Ouvrir la modal au clic sur le marqueur
+            marker.on('click', function() {
+                openModal(building.id);
+            });
+        });
+
+        // Centrer la carte sur tous les bâtiments
+        const group = new L.featureGroup(buildings.map(b => 
+            L.marker([b.coords.lat, b.coords.lng])
+        ));
+        // map.fitBounds(group.getBounds().pad(0.1));  // Optionnel
+    </script>
+</body>
+</html>
